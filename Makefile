@@ -9,7 +9,16 @@ SIMULATOR_ARCHIVE_PATH = $(CURRENT_DIRECTORY)/build/ios_simulator.xcarchive/Prod
 SIMULATOR_ARCHIVE_DSYM_PATH = $(CURRENT_DIRECTORY)/build/ios_simulator.xcarchive/dSYMs/
 IOS_ARCHIVE_PATH = $(CURRENT_DIRECTORY)/build/ios.xcarchive/Products/Library/Frameworks/
 IOS_ARCHIVE_DSYM_PATH = $(CURRENT_DIRECTORY)/build/ios.xcarchive/dSYMs/
-IOS_DESTINATION = 'platform=iOS Simulator,name=iPhone 15'
+
+# CI variables with defaults. Update the defaults for local development as needed.
+IOS_DEVICE_NAME ?= iPhone 15
+# If OS version is not specified, uses the first device name match in the list of available simulators
+IOS_VERSION ?= 
+ifeq ($(strip $(IOS_VERSION)),)
+    IOS_DESTINATION = "platform=iOS Simulator,name=$(IOS_DEVICE_NAME)"
+else
+    IOS_DESTINATION = "platform=iOS Simulator,name=$(IOS_DEVICE_NAME),OS=$(IOS_VERSION)"
+endif
 
 setup:
 	(pod install)
@@ -29,6 +38,9 @@ zip:
 	swift package compute-checksum build/$(PROJECT_NAME).xcframework.zip
 
 test: clean unit-test
+
+# CI alias for unit-test
+unit-test-ios: clean unit-test
 
 unit-test: 
 	@echo "######################################################################"
@@ -73,15 +85,8 @@ lint: swift-lint check-format
 swift-lint:
 	(./Pods/SwiftLint/swiftlint lint $(PROJECT_NAME)/Sources)
 
-check-version:
-	(sh ./Script/version.sh $(VERSION))
-
 test-SPM-integration:
 	(sh ./Script/test-SPM.sh)
 
 test-podspec:
 	(sh ./Script/test-podspec.sh)
-
-# used to test update-versions.sh script locally
-test-versions:
-	(sh ./Script/update-versions.sh -n NotificationContent -v 5.9.9)
