@@ -94,7 +94,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 // UNUserNotificationCenterDelegate is not annotated for concurrency, but the system calls it on the main thread.
 // A preconcurrency conformance lets this main actor app delegate conform in Swift 6.
-#if compiler(>=6.0)
+#if swift(>=6.0)
     extension AppDelegate: @preconcurrency UNUserNotificationCenterDelegate {}
 #else
     extension AppDelegate: UNUserNotificationCenterDelegate {}

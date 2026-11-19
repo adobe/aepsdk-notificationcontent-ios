@@ -144,8 +144,8 @@ open class AEPNotificationViewController: UIViewController, TemplateControllerDe
 }
 
 // UNNotificationContentExtension is not annotated for concurrency, but the system always calls it on the main thread.
-// A preconcurrency conformance lets this main actor class conform in Swift 6, and older compilers keep the plain conformance.
-#if compiler(>=6.0)
+// A preconcurrency conformance lets this main actor class conform in Swift 6 mode, and Swift 5 mode keeps the plain conformance.
+#if swift(>=6.0)
     extension AEPNotificationViewController: @preconcurrency UNNotificationContentExtension {}
 #else
     extension AEPNotificationViewController: UNNotificationContentExtension {}
