@@ -57,13 +57,13 @@ _archive: clean build
 format: lint-autocorrect swift-format
 
 check-format:
-	(swiftformat --lint $(PROJECT_NAME)/Sources --swiftversion 5.1)
+	(swiftformat --lint $(PROJECT_NAME)/Sources --swiftversion 5.10)
 
 install-swiftformat:
 	(brew install swiftformat)
 
 swift-format:
-	(swiftformat $(PROJECT_NAME)/Sources --swiftversion 5.1)
+	(swiftformat $(PROJECT_NAME)/Sources --swiftversion 5.10)
 
 lint-autocorrect:
 	($(CURRENT_DIRECTORY)/Pods/SwiftLint/swiftlint --fix)

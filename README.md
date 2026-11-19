@@ -12,8 +12,8 @@ For further information about Adobe SDKs, visit the [developer documentation](ht
 
 ## Requirements
 
-- Xcode 15 (or newer)
-- Swift 5.1 (or newer)
+- Xcode 15.3 (or newer)
+- Swift 5.10 (or newer)
 
 ## Getting started
 
