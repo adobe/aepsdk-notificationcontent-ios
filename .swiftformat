@@ -4,4 +4,12 @@
     wrapMultilineStatementBraces, \
     redundantSelf, \
     trailingCommas, \
-    braces
+    braces, \
+    docComments, \
+    conditionalAssignment, \
+    redundantReturn, \
+    redundantOptionalBinding, \
+    redundantVariable, \
+    wrapArguments, \
+    preferKeyPath, \
+    andOperator

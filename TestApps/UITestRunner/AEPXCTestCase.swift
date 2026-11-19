@@ -14,6 +14,8 @@
 import Foundation
 import XCTest
 
+// XCUIApplication is main actor only in Swift 6. UI tests drive the app from the main thread, so the base test case runs on the main actor.
+@MainActor
 class AEPXCTestCase : XCTestCase {
     
     //  Constants for test notification

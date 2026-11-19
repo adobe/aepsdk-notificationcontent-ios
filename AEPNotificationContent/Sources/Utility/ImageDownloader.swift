@@ -53,20 +53,29 @@ class ImageDownloader {
 
         // Create a dispatch group to track the download progress
         let downloadGroup = DispatchGroup()
-        var downloadedImages: [String: Result<UIImage, ImageDownloadError>] = [:]
+        // URLSession completions run on background threads concurrently, so results are written under a lock to avoid a data race.
+        let resultsLock = NSLock()
+        nonisolated(unsafe) var downloadedImages: [String: Result<UIImage, ImageDownloadError>] = [:]
 
         // Download images concurrently
         for urlString in urls {
             downloadGroup.enter()
             loadImageFromURL(urlString) { result in
+                resultsLock.lock()
                 downloadedImages[urlString] = result
+                resultsLock.unlock()
                 downloadGroup.leave()
             }
         }
 
+        // Completion is only called on the main queue after every download finished, so it is safe to hand it to the notify block.
+        nonisolated(unsafe) let completion = completion
         // Notify the main queue when all downloads are complete
         downloadGroup.notify(queue: .main) {
-            completion(downloadedImages)
+            resultsLock.lock()
+            let results = downloadedImages
+            resultsLock.unlock()
+            completion(results)
         }
     }
 
@@ -75,7 +84,8 @@ class ImageDownloader {
     /// - Parameters:
     ///   - urlString: The URL string for the image to be downloaded.
     ///   - completion: A `Result` value called with the downloaded image or an ImageDownloadError.
-    private func loadImageFromURL(_ urlString: String, completion: @escaping (Result<UIImage, ImageDownloadError>) -> Void) {
+    // The completion is Sendable because URLSession calls it on a background queue. This is an internal API so no public signature changes.
+    private func loadImageFromURL(_ urlString: String, completion: @escaping @Sendable (Result<UIImage, ImageDownloadError>) -> Void) {
         // validate the url before downloading
         guard let url = URL(string: urlString) else {
             completion(.failure(.invalidURL(url: urlString)))
