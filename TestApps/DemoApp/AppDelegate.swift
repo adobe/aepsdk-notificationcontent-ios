@@ -22,7 +22,7 @@ import AEPRulesEngine
 import AEPSignal
 import AEPMessaging
 
-class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         MobileCore.setLogLevel(.debug)
 
@@ -60,11 +60,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Ask for user permission
         center.requestAuthorization(options: [.badge, .sound, .alert]) { [weak self] granted, _ in
             guard granted else { return }
-
-            center.delegate = self
-
-            self?.registerNotificationCategories()
+            // The authorization callback runs on a background queue, so the delegate and categories are set up on main.
             DispatchQueue.main.async {
+                let center = UNUserNotificationCenter.current()
+                center.delegate = self
+                self?.registerNotificationCategories()
                 application.registerForRemoteNotifications()
             }
         }
@@ -91,3 +91,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
 
 }
+
+// UNUserNotificationCenterDelegate is not annotated for concurrency, but the system calls it on the main thread.
+// A preconcurrency conformance lets this main actor app delegate conform in Swift 6.
+#if compiler(>=6.0)
+    extension AppDelegate: @preconcurrency UNUserNotificationCenterDelegate {}
+#else
+    extension AppDelegate: UNUserNotificationCenterDelegate {}
+#endif
