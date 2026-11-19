@@ -14,7 +14,7 @@ import UIKit
 import UserNotifications
 import UserNotificationsUI
 
-open class AEPNotificationViewController: UIViewController, UNNotificationContentExtension, TemplateControllerDelegate {
+open class AEPNotificationViewController: UIViewController, TemplateControllerDelegate {
     open var notification: UNNotification?
 
     // MARK: - UNNotificationContentExtension delegate methods
@@ -123,12 +123,15 @@ open class AEPNotificationViewController: UIViewController, UNNotificationConten
         }
 
         extensionContext?.open(url) { [weak self] isSuccess in
-            guard let self = self else { return }
-            /// If the url failed to open, perform the default action
-            if !isSuccess {
-                extensionContext?.performNotificationDefaultAction()
+            // The open completion queue is not documented, so we hop to main before touching the main actor extension context.
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                /// If the url failed to open, perform the default action
+                if !isSuccess {
+                    self.extensionContext?.performNotificationDefaultAction()
+                }
+                self.removeNotificationFromCenter()
             }
-            removeNotificationFromCenter()
         }
     }
 
@@ -139,3 +142,11 @@ open class AEPNotificationViewController: UIViewController, UNNotificationConten
         }
     }
 }
+
+// UNNotificationContentExtension is not annotated for concurrency, but the system always calls it on the main thread.
+// A preconcurrency conformance lets this main actor class conform in Swift 6, and older compilers keep the plain conformance.
+#if compiler(>=6.0)
+    extension AEPNotificationViewController: @preconcurrency UNNotificationContentExtension {}
+#else
+    extension AEPNotificationViewController: UNNotificationContentExtension {}
+#endif

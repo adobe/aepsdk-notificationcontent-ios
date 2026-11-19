@@ -13,6 +13,8 @@
 import Foundation
 import UIKit
 
+// Every template controller calls this delegate from UIKit code on the main thread. Marking it main actor lets AEPNotificationViewController conform in Swift 6.
+@MainActor
 protocol TemplateControllerDelegate {
     /// This method should be called when the template failed to load
     /// A template can fail if there are issues in downloading images, parsing the payload, etc.
