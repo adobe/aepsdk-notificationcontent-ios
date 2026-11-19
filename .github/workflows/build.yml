@@ -50,7 +50,6 @@ jobs:
       #     move_coverage_to_trash: true
 
   build-swift6:
-    needs: build
     runs-on: xcode-27
 
     steps:
@@ -69,7 +68,6 @@ jobs:
         run: make test-swift6-consumer
 
   build-min-toolchain:
-    needs: build
     runs-on: macos-14
 
     steps:
