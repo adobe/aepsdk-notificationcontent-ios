@@ -1,0 +1,78 @@
+#
+# Copyright 2026 Adobe. All rights reserved.
+# This file is licensed to you under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License. You may obtain a copy
+# of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+# OF ANY KIND, either express or implied. See the License for the specific language
+# governing permissions and limitations under the License.
+#
+
+version: 2.1
+
+workflows:
+  version: 2
+  build-lanes:
+    jobs:
+      - build-swift6
+      - build-min-toolchain
+
+commands:
+  install_dependencies:
+    steps:
+      - restore_cache:
+          name: Restore CocoaPods cache
+          keys:
+            - pods-v1-{{ checksum "Podfile.lock" }}
+            - pods-v1-
+
+      - run:
+          name: Install CocoaPods
+          command: make pod-install
+
+      - save_cache:
+          name: Save CocoaPods cache
+          key: pods-v1-{{ checksum "Podfile.lock" }}
+          paths:
+            - Pods
+            - ~/.cocoapods
+
+jobs:
+  # Swift 6 language-mode coverage. Selecting Xcode 27 does not select Swift 6
+  # mode (checked-in targets are SWIFT_VERSION = 5.0), so this lane builds the
+  # AEPNotificationContent target in Swift 6 via AEPNOTIFICATIONCONTENT_SWIFT_VERSION
+  # (referenced only by that target), then compiles a Swift 6 consumer that
+  # subclasses AEPNotificationViewController from @MainActor code. Pods keep their
+  # own declared language modes.
+  build-swift6:
+    resource_class: m4pro.medium
+    macos:
+      xcode: 27.0.0
+
+    steps:
+      - checkout
+      - install_dependencies
+      - run:
+          name: Build AEPNotificationContent in Swift 6 language mode (dependencies keep their modes)
+          command: make build-swift6
+      - run:
+          name: Build Swift 6 consumer (subclass and content extension calls from @MainActor)
+          command: make test-swift6-consumer
+
+  # Minimum-supported-toolchain coverage. README advertises Xcode 15.3+ / Swift
+  # 5.10 as the floor; 15.4 is the oldest 15.x image CircleCI still hosts and
+  # ships the same Swift 5.10 compiler. Compile-only to catch accidental use of
+  # APIs or language features newer than the advertised minimum.
+  build-min-toolchain:
+    resource_class: m4pro.medium
+    macos:
+      xcode: 15.4.0
+
+    steps:
+      - checkout
+      - install_dependencies
+      - run:
+          name: Build SDK on minimum supported toolchain (Xcode 15.4 / Swift 5.10)
+          command: make build-min-toolchain
